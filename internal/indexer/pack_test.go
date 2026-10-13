@@ -66,3 +66,50 @@ func TestMultiBookPackMarker_SingleBooks(t *testing.T) {
 		}
 	}
 }
+
+// TestMultiBookPackMarker_FoundationSearch pins the release names of one
+// search for "Foundation" by Isaac Asimov (#3224). The first was auto-grabbed
+// as a single book and held ten.
+func TestMultiBookPackMarker_FoundationSearch(t *testing.T) {
+	for _, title := range []string{
+		"Foundation series by Isaac Asimov EPUB",
+		"The Foundation Collection Isaac Asimov .EPUB (11 Books)",
+		"Foundation Series - Isaac Asimov 1-7 (KINDLE)",
+		"Isaac Asimov Books Collection(Foundation Pack)",
+		"Foundation Saga eBooks",
+		"Ebook Series Isaac Asimov (03 Books)",
+	} {
+		if MultiBookPackMarker(title) == "" {
+			t.Errorf("%q was not recognised as a multi-book pack", title)
+		}
+	}
+}
+
+// TestMultiBookPackMarker_FoundationSingles is the other half of the same
+// search: single book releases and titles that share the pack words.
+func TestMultiBookPackMarker_FoundationSingles(t *testing.T) {
+	for _, tc := range []struct {
+		title string
+		why   string
+	}{
+		{"Foundation: HarperVoyager edition by Isaac Asimov, Book 1 EPUB", "the single book release from the same search"},
+		{"Red Rising Series by Pierce Brown, Book 1 [M4B]", "series by with a book number is one book"},
+		{"Dune Series by Frank Herbert - Vol. 2", "a volume number names one book"},
+		{"A Series of Unfortunate Events: The Bad Beginning", "series of is a title"},
+		{"Lemony Snicket - A Series of Unfortunate Events", "series of is a title"},
+		{"The Complete Sherlock Holmes", "complete alone is one edition"},
+		{"Collected Stories - Gabriel Garcia Marquez", "collected is a single book"},
+		{"Isaac Asimov - Foundation Series Guide (2019)", "series in the middle of a title with no by or range"},
+		{"Red Rising Series - Morning Star Part 1-2", "a part range is one split recording"},
+		{"Red Rising Series - Book 1 - 2020 Edition", "an edition year is not a range"},
+		{"The Foundation Series (2014-2016 reissue)", "a year span is not a range"},
+		{"Foundation (1951) by Isaac Asimov (EPUB)", "a bracketed year and format"},
+		{"Starter Pack Blues - Jane Doe", "pack inside a title with no bracket"},
+		{"Six Books You Must Read - John Smith", "a count with books but no brackets"},
+		{"The Series - Jane Doe", "series alone"},
+	} {
+		if got := MultiBookPackMarker(tc.title); got != "" {
+			t.Errorf("%q matched %q but is a single book (%s)", tc.title, got, tc.why)
+		}
+	}
+}
