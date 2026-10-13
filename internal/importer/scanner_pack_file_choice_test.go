@@ -70,3 +70,25 @@ func TestImport_SeriesDownloadPlacesTheMatchingBook(t *testing.T) {
 		t.Errorf("the library file is not the Origin EPUB from the download")
 	}
 }
+
+// TestImport_SeriesDownloadMatchesByEpubTitle covers releases whose file names
+// say nothing about the book: the EPUB's dc:title decides which one is placed.
+func TestImport_SeriesDownloadMatchesByEpubTitle(t *testing.T) {
+	s, dl, downloadPath, files := seriesDownloadFixture(t)
+	writeEpubAt(t, filepath.Join(downloadPath, "a.epub"), "Before the Origin", "Author A", "9780000000001")
+	writeEpubAt(t, filepath.Join(downloadPath, "b.epub"), "Origin", "Author A", "9780000000002")
+
+	s.tryImportInternal(t.Context(), dl, downloadPath, "", "", "", nil, nil)
+
+	got := files()
+	if len(got) != 1 {
+		t.Fatalf("book files = %d, want 1: %+v", len(got), got)
+	}
+	meta, err := ReadEpubMetadata(got[0].Path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if meta.Title != "Origin" {
+		t.Errorf("placed EPUB has dc:title %q, want %q", meta.Title, "Origin")
+	}
+}
