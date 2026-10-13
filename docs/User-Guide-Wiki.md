@@ -390,11 +390,20 @@ finished download and place each book's files against the right book record.
 A release is only judged a pack on wording that single books do not use about
 themselves. `Part 1-2` is left alone, because that is how one long audiobook
 is split, and so is `Trilogy`, because real single books are subtitled "Book
-III of the X Trilogy". If the book you are tracking is itself a bundle (a box
-set as one record), matching packs are allowed for it.
+III of the X Trilogy". A bare `series` or `collection` is left alone too, but
+the shapes only a pack uses are caught: `Foundation series by Isaac Asimov`
+with no book number, `Series 1-7`, a bracketed count such as `(11 Books)`,
+`Books Collection`, `Series Pack` and `Saga eBooks`. `Series by Pierce Brown,
+Book 1` names one book and is not a pack. If the book you are tracking is
+itself a bundle (a box set as one record), matching packs are allowed for it.
 
-When a download holds several ebook files of one format, the one whose file
-name or EPUB title is closest to the book is imported.
+A pack whose name gives no sign of it can still be grabbed. When a download
+holds several ebook files of one format, the one whose file name or EPUB title
+is closest to the book is imported, and so is the one an external drop folder
+receives. An ebook file under 4 KiB in a download, such as the notes or link
+`.txt` a release ships beside the book, is not imported as a second format. A
+download that holds nothing else is blocked, and Manual Import places a file
+that small if it really is the book. Audiobook tracks are never judged by size.
 
 **Grab.** Torznab (torrent) indexers route to your torrent client, Newznab
 (usenet) to your NZB client — which is why the client's protocol must match
@@ -741,7 +750,8 @@ Things worth knowing:
   cannot be adopted. Ignore it, or delete it from the folder. A notes file
   beside the book file that matched is still counted quietly as that book's
   companion and not listed. Audiobook tracks are not judged by size, and
-  files already tracked are not affected (#2944). If a file that small really
+  files already tracked are not affected (#2944). The same floor applies to
+  the files an automatic import takes from a download (#3224). If a file that small really
   is the book, **Manual Import** is the override: it imports whatever file
   you pick, whatever its size.
 - **In your audiobooks folder** / **In your ebooks folder**: when
