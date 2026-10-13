@@ -1,6 +1,7 @@
 package importer
 
 import (
+	"io/fs"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -17,20 +18,23 @@ import (
 // Manual import does not call it: that is the override for a file this small
 // that really is the book.
 //
-// Only a file inside downloadPath is measured, checked with filepath.Rel and
-// filepath.IsLocal on the path that is then statted, the guard CodeQL's
-// go/path-injection query credits (see WriteOPFSidecarFile). A file outside
-// it is kept, as it was before this check existed.
+// Only a file inside downloadPath is measured, through an fs.FS rooted there,
+// so the stat cannot leave the download folder whatever the path holds. A
+// file outside it is kept, as it was before this check existed.
 func dropImplausibleEbooks(downloadPath string, files []string) []string {
 	root := filepath.Clean(downloadPath)
+	download := os.DirFS(root)
 	tooSmall := make(map[string]bool)
 	for _, path := range files {
 		rel, err := filepath.Rel(root, filepath.Clean(path))
-		if err != nil || !filepath.IsLocal(rel) {
+		if err != nil {
 			continue
 		}
-		target := filepath.Join(root, rel)
-		if info, err := os.Stat(target); err == nil && TooSmallToBeABook(target, info.Size()) {
+		name := filepath.ToSlash(rel)
+		if !fs.ValidPath(name) {
+			continue
+		}
+		if info, err := fs.Stat(download, name); err == nil && TooSmallToBeABook(path, info.Size()) {
 			tooSmall[path] = true
 		}
 	}
