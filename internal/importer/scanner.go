@@ -1569,9 +1569,6 @@ func (s *Scanner) tryImportInternal(ctx context.Context, dl *models.Download, do
 	// per-job destDir, plus the RPC-failure fallback path for torrent
 	// clients).
 	bookFiles := discoverBookFiles(downloadPath, explicitFiles)
-	if !isManualImport(ctx) {
-		bookFiles = dropImplausibleEbooks(downloadPath, bookFiles)
-	}
 
 	if len(bookFiles) == 0 {
 		// Before failing, check whether the book is already in the library. This

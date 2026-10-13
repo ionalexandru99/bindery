@@ -1,2 +1,2 @@
 ### Fixed
-- **A download holding a whole series imports the book it was grabbed for** (#3224): when several ebook files of one format would land in the same place, the one whose file name or EPUB title is closest to the book is placed, rather than whichever came first on disk. A release's link or notes file under 4 KiB is no longer imported as another format of the book when the download also has a real ebook.
+- **A download holding several books imports the one it was grabbed for** (#3224): when several ebook files of one format would land in the same place, the one whose file name or EPUB title is closest to the book is placed, rather than whichever came first on disk.

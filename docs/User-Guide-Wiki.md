@@ -394,9 +394,7 @@ III of the X Trilogy". If the book you are tracking is itself a bundle (a box
 set as one record), matching packs are allowed for it.
 
 When a download holds several ebook files of one format, the one whose file
-name or EPUB title is closest to the book is imported. Files under 4 KiB, such
-as a release's link or notes file, are not imported as a format of the book
-when the download also holds a real ebook.
+name or EPUB title is closest to the book is imported.
 
 **Grab.** Torznab (torrent) indexers route to your torrent client, Newznab
 (usenet) to your NZB client — which is why the client's protocol must match

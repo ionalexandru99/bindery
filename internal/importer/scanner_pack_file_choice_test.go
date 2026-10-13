@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/vavallee/bindery/internal/models"
@@ -34,8 +33,8 @@ func seriesDownloadFixture(t *testing.T) (*Scanner, *models.Download, string, fu
 	return s, dl, t.TempDir(), files
 }
 
-// writeEbook writes an EPUB-shaped file large enough to pass the 4 KiB floor,
-// tagged with marker so the test can tell which source landed.
+// writeEbook writes an EPUB-shaped file tagged with marker, so the test can
+// tell which source landed.
 func writeEbook(t *testing.T, path, marker string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
@@ -69,24 +68,5 @@ func TestImport_SeriesDownloadPlacesTheMatchingBook(t *testing.T) {
 	}
 	if !bytes.Contains(data, []byte("origin")) || bytes.Contains(data, []byte("before")) {
 		t.Errorf("the library file is not the Origin EPUB from the download")
-	}
-}
-
-// TestImport_SkipsFilesTooSmallToBeABook pins the #2944 floor on the
-// post-download path: a release's link file under 4 KiB is not imported as a
-// second format of the book beside the real EPUB.
-func TestImport_SkipsFilesTooSmallToBeABook(t *testing.T) {
-	s, dl, downloadPath, files := seriesDownloadFixture(t)
-	writeEbook(t, filepath.Join(downloadPath, "Origin - Author A.epub"), "origin")
-	spam := []byte(strings.Repeat("www.example.online - free ebooks ", 7))
-	if err := os.WriteFile(filepath.Join(downloadPath, "www.example.online.txt"), spam, 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	s.tryImportInternal(t.Context(), dl, downloadPath, "", "", "", nil, nil)
-
-	got := files()
-	if len(got) != 1 || filepath.Ext(got[0].Path) != ".epub" {
-		t.Fatalf("book files = %+v, want only the epub", got)
 	}
 }
