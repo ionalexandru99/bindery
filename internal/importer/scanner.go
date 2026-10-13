@@ -1569,6 +1569,9 @@ func (s *Scanner) tryImportInternal(ctx context.Context, dl *models.Download, do
 	// per-job destDir, plus the RPC-failure fallback path for torrent
 	// clients).
 	bookFiles := discoverBookFiles(downloadPath, explicitFiles)
+	if !isManualImport(ctx) {
+		bookFiles = dropImplausibleEbooks(bookFiles)
+	}
 
 	if len(bookFiles) == 0 {
 		// Before failing, check whether the book is already in the library. This
@@ -2318,7 +2321,7 @@ func (s *Scanner) tryImportInternal(ctx context.Context, dl *models.Download, do
 	ebookRoot := s.effectiveLibraryDir(ctx, author)
 	ebookMode := s.resolveImportMode(configuredMode, downloadPath, ebookRoot)
 	calibreQueued := false
-	for _, srcFile := range bookFiles {
+	for _, srcFile := range orderByBookTitle(book, bookFiles) {
 		if book == nil {
 			// Try to match from filename
 			parsed := ParseFilename(srcFile)

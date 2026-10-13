@@ -393,6 +393,12 @@ is split, and so is `Trilogy`, because real single books are subtitled "Book
 III of the X Trilogy". If the book you are tracking is itself a bundle (a box
 set as one record), matching packs are allowed for it.
 
+A pack named in words this check does not catch ("Foundation series") still
+imports the right book: when several ebook files of one format would land in
+the same place, the one whose file name or EPUB title is closest to the book
+is placed. Files under 4 KiB, such as a release's link or notes file, are not
+imported as a format of the book when the download also holds a real ebook.
+
 **Grab.** Torznab (torrent) indexers route to your torrent client, Newznab
 (usenet) to your NZB client — which is why the client's protocol must match
 the indexer, and why the category (default `books`) must already exist in the
