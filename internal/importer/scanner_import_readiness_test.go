@@ -399,7 +399,7 @@ func TestCheckQbittorrentDownloads_TempPathDownloadIsNotImportedEarly(t *testing
 		t.Fatal(err)
 	}
 	epub := filepath.Join(releasePath, "book.epub")
-	if err := os.WriteFile(epub, []byte("epub"), 0o644); err != nil {
+	if err := os.WriteFile(epub, bookSized("epub"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	f.qbit.set(map[string]any{

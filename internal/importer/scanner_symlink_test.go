@@ -14,11 +14,11 @@ func TestDiscoverBookFiles_SkipsSymlinks(t *testing.T) {
 	dir := t.TempDir()
 
 	real := filepath.Join(dir, "real.epub")
-	if err := os.WriteFile(real, []byte("book"), 0o644); err != nil {
+	if err := os.WriteFile(real, bookSized("book"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	secret := filepath.Join(dir, "secret.txt")
-	if err := os.WriteFile(secret, []byte("SECRET"), 0o644); err != nil {
+	if err := os.WriteFile(secret, bookSized("SECRET"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	evil := filepath.Join(dir, "evil.epub")

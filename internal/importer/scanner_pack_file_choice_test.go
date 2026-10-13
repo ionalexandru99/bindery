@@ -22,7 +22,9 @@ func seriesDownloadFixture(t *testing.T) (*Scanner, *models.Download, string, fu
 	if err := bookRepo.Update(ctx, book); err != nil {
 		t.Fatal(err)
 	}
-	dl.Title = "Origin series by Author A EPUB"
+	// A name the pack markers do not catch. One they catch is refused before
+	// any file is placed (#2276, #3224).
+	dl.Title = "Origin - Author A EPUB"
 	files := func() []models.BookFile {
 		got, err := bookRepo.ListBookFiles(ctx, book.ID)
 		if err != nil {
