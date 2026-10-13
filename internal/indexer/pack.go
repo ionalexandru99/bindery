@@ -63,9 +63,11 @@ import (
 //     ("Discworld Series by Terry Pratchett - Guards! Guards!") or a book
 //     number ("Red Rising Series by Pierce Brown, Book 1"). "A Series of
 //     Unfortunate Events" is a title, so "series of" never matches.
-//   - A numeric range after "series" and at least one word ("Series - Isaac
-//     Asimov 1-7"), unless the number is a part or disc ("Series Part 1-2" is
-//     one split recording). "Series 1 - 2" with nothing between is left alone.
+//   - A numeric range after "series", either written compactly right after it
+//     ("Discworld Series 1-41", "Series (1-7)", "Series - 1-7") or after at
+//     least one word ("Series - Isaac Asimov 1-7"), unless the number is a
+//     part or disc ("Series Part 1-2" is one split recording). A spaced
+//     "Series 1 - 2" with nothing between is left alone.
 //     The range must be one or two digits on both sides and rising, so a year
 //     span ("2014-2016") or an edition year ("1 - 2020") is not read as one.
 var multiBookPackRe = regexp.MustCompile(`(?i)` +
@@ -87,6 +89,9 @@ var (
 	bookNumberRe = regexp.MustCompile(`(?i)\b(?:book|vol(?:ume)?|bk|no|part|pt)\.?\s*#?\s*(?:\d+|[ivx]+|one|two|three|four|five|six|seven|eight|nine|ten)\b|#\s*\d+`)
 	// seriesRangeRe finds a one or two digit range after the series word.
 	seriesRangeRe = regexp.MustCompile(`(?i)\bseries\b([^\n]{0,60}?[a-z][^\n]{0,60}?)\b(\d{1,2})\s*[-–—]\s*(\d{1,2})\b`)
+	// seriesCompactRangeRe finds a range with no spaces around its dash that
+	// follows "series" directly, past separators and an opening bracket only.
+	seriesCompactRangeRe = regexp.MustCompile(`(?i)\bseries\b([\s\-–—:(\[]*)(\d{1,2})[-–—](\d{1,2})\b`)
 	// partWordRe ends text that introduces a split recording or disc set.
 	partWordRe = regexp.MustCompile(`(?i)\b(?:parts?|pts?|discs?|cds?|chapters?|ch)\.?\s*$`)
 )
@@ -94,11 +99,13 @@ var (
 // seriesPackMarker reports the series wording of title that only a whole
 // series is named with, or "" (#3224). See the notes above multiBookPackRe.
 func seriesPackMarker(title string) string {
-	if m := seriesRangeRe.FindStringSubmatchIndex(title); m != nil {
-		lo, _ := strconv.Atoi(title[m[4]:m[5]])
-		hi, _ := strconv.Atoi(title[m[6]:m[7]])
-		if lo < hi && !partWordRe.MatchString(title[:m[4]]) {
-			return strings.TrimSpace(title[m[0]:m[1]])
+	for _, re := range []*regexp.Regexp{seriesRangeRe, seriesCompactRangeRe} {
+		if m := re.FindStringSubmatchIndex(title); m != nil {
+			lo, _ := strconv.Atoi(title[m[4]:m[5]])
+			hi, _ := strconv.Atoi(title[m[6]:m[7]])
+			if lo < hi && !partWordRe.MatchString(title[:m[4]]) {
+				return strings.TrimSpace(title[m[0]:m[1]])
+			}
 		}
 	}
 	if loc := seriesByRe.FindStringIndex(title); loc != nil && !bookNumberRe.MatchString(title) &&
@@ -110,27 +117,38 @@ func seriesPackMarker(title string) string {
 
 var (
 	bracketGroupRe = regexp.MustCompile(`[(\[][^)\]]*[)\]]`)
-	titleSepRe     = regexp.MustCompile(`\s[-–—]\s|:`)
+	titleSepRe     = regexp.MustCompile(`\s[-–—]\s|[:,]`)
 	yearRe         = regexp.MustCompile(`^(?:19|20)\d\d$`)
+	countRe        = regexp.MustCompile(`^\d{1,3}$`)
 	noiseWords     = map[string]bool{
 		"epub": true, "mobi": true, "azw": true, "azw3": true, "pdf": true,
 		"ebook": true, "ebooks": true, "e-book": true, "e-books": true,
 		"kindle": true, "complete": true, "collection": true, "retail": true,
+		"book": true, "books": true, "full": true, "series": true, "pack": true,
+		"edition": true, "updated": true, "set": true, "saga": true,
 	}
 )
 
-// onlyNoiseAfterSeriesBy reports whether, past the first dash or colon of the
-// text after "series by", there is nothing a book could be titled with. The
-// text before it is the author. Bracketed groups are tags and are dropped.
+// onlyNoiseAfterSeriesBy reports whether, past the first dash, colon or comma
+// of the text after "series by", there is nothing a book could be titled with.
+// The text before it is the author. Bracketed groups are tags and are dropped.
+// What follows may be pack or format noise ("7 Books", "Full Series", "eBook
+// Pack", "Kindle Edition", "Updated 2021"), or a list of titles, which is a
+// pack too: two or more commas, or three titles joined by "and". One title
+// after the separator is a single book.
 func onlyNoiseAfterSeriesBy(rest string) bool {
 	rest = bracketGroupRe.ReplaceAllString(rest, " ")
 	loc := titleSepRe.FindStringIndex(rest)
 	if loc == nil {
 		return true
 	}
-	for _, w := range strings.Fields(strings.ToLower(rest[loc[1]:])) {
+	tail := rest[loc[1]:]
+	if strings.Count(tail, ",") >= 2 || strings.Count(strings.ToLower(tail), " and ") >= 2 {
+		return true
+	}
+	for _, w := range strings.Fields(strings.ToLower(tail)) {
 		w = strings.Trim(w, ".,;!?&+-")
-		if w != "" && !noiseWords[w] && !yearRe.MatchString(w) {
+		if w != "" && !noiseWords[w] && !yearRe.MatchString(w) && !countRe.MatchString(w) {
 			return false
 		}
 	}

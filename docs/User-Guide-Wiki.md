@@ -392,11 +392,15 @@ themselves. `Part 1-2` is left alone, because that is how one long audiobook
 is split, and so is `Trilogy`, because real single books are subtitled "Book
 III of the X Trilogy". A bare `series` or `collection` is left alone too, but
 the shapes only a pack uses are caught: `Foundation series by Isaac Asimov`
-when only format words (EPUB, ebook, kindle, a year) follow the author,
-`Series - Isaac Asimov 1-7`, a bracketed count of two or more such as
+when only pack or format words (EPUB, `7 Books`, `Full Series`, `eBook Pack`,
+`Kindle Edition`, `Updated 2021`) or a list of two or more commas or three
+titles joined by `and` follow the author, a range after the series word such
+as `Discworld Series 1-41`, `Series (1-7)` or `Series - Isaac Asimov 1-7`, a bracketed count of two or more such as
 `(11 Books)`, `Books Collection` (plural only), `Series Pack` and `Saga eBooks`.
-A title after the author names one book and is not a pack: `Discworld Series by
-Terry Pratchett - Guards! Guards!`, `Series by Pierce Brown, Book 1`, `[1 Book]`. If the book you are tracking is
+A single title after the author names one book and is not a pack: `Discworld
+Series by Terry Pratchett - Guards! Guards!`, `Series by C.S. Lewis, The
+Magician's Nephew`, `Series by Pierce Brown, Book 1`, `[1 Book]`, a spaced
+`Series 1 - 2`. If the book you are tracking is
 itself a bundle (a box set as one record), matching packs are allowed for it.
 
 A pack whose name gives no sign of it can still be grabbed. When a download
@@ -409,7 +413,8 @@ Eye of the World`; names that say nothing keep the order they have on disk. An e
 `.txt` a release ships beside the book, is not imported as a second format. A
 download that holds nothing else is blocked, whether the import is managed or
 goes to an external drop folder, and Manual Import places a file that small if
-it really is the book, in either mode. Audiobook tracks are never judged by size.
+it really is the book, in either mode. A manual import of such a file for a
+book set to both formats is still held for its sibling and released with it. Audiobook tracks are never judged by size.
 
 **Grab.** Torznab (torrent) indexers route to your torrent client, Newznab
 (usenet) to your NZB client — which is why the client's protocol must match

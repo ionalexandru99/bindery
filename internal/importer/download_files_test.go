@@ -51,3 +51,24 @@ func TestOrderByBookTitle(t *testing.T) {
 		})
 	}
 }
+
+// TestShouldMoveAhead pins the two constants: a score just under the floor, or
+// a lead just under the margin, leaves walk order alone, and the values on the
+// line move the file. Setting either constant to 0 breaks a case here.
+func TestShouldMoveAhead(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		best, leader float64
+		want         bool
+	}{
+		{"at the floor and far ahead", 0.85, 0.50, true},
+		{"just under the floor", 0.84, 0.50, false},
+		{"exactly the margin", 0.95, 0.90, true},
+		{"just under the margin", 0.94, 0.90, false},
+		{"no lead", 0.95, 0.95, false},
+	} {
+		if got := shouldMoveAhead(tc.best, tc.leader); got != tc.want {
+			t.Errorf("%s: shouldMoveAhead(%v, %v) = %v, want %v", tc.name, tc.best, tc.leader, got, tc.want)
+		}
+	}
+}

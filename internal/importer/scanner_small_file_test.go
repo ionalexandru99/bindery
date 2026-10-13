@@ -141,3 +141,22 @@ func TestDropFlatLayoutKeepsTheMatchingBook(t *testing.T) {
 		t.Errorf("dropped %q is not the Origin EPUB", entries[0].Name())
 	}
 }
+
+// TestDiscoverBookFiles_ManualContextKeepsTinyFiles: the context decides. The
+// formats the other callers read (the import mode, the preview) come out the
+// same either way, so the placement and pair gating tests are what show their
+// effect; this pins the shared function itself.
+func TestDiscoverBookFiles_ManualContextKeepsTinyFiles(t *testing.T) {
+	dir := t.TempDir()
+	writeNote(t, filepath.Join(dir, "short.txt"))
+	if got := discoverBookFiles(t.Context(), dir, nil); len(got) != 0 {
+		t.Errorf("automatic context kept %v", got)
+	}
+	if got := discoverBookFiles(withManualImport(t.Context()), dir, nil); len(got) != 1 {
+		t.Errorf("manual context kept %v, want the tiny file", got)
+	}
+	explicit := []string{filepath.Join(dir, "short.txt")}
+	if got := discoverBookFiles(withManualImport(t.Context()), dir, explicit); len(got) != 1 {
+		t.Errorf("manual context with an explicit list kept %v", got)
+	}
+}

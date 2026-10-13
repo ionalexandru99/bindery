@@ -65,7 +65,7 @@ func orderByBookTitle(book *models.Book, files []string) []string {
 				best, bestScore = f, sc
 			}
 		}
-		if best != group[0] && bestScore >= minFileTitleScore && bestScore-first >= fileTitleMargin {
+		if best != group[0] && shouldMoveAhead(bestScore, first) {
 			leaders = append(leaders, best)
 		}
 	}
@@ -79,6 +79,13 @@ func orderByBookTitle(book *models.Book, files []string) []string {
 		}
 	}
 	return out
+}
+
+// shouldMoveAhead is the gate on a reorder: the best file's score clears the
+// floor and beats the walk order leader's by the margin. The small tolerance
+// keeps a margin of exactly fileTitleMargin from being lost to rounding.
+func shouldMoveAhead(best, leader float64) bool {
+	return best >= minFileTitleScore && best-leader >= fileTitleMargin-1e-9
 }
 
 // fileTitleScore is how well the file names the book, 0 to 1, with want the
