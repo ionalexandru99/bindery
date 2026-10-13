@@ -1570,7 +1570,7 @@ func (s *Scanner) tryImportInternal(ctx context.Context, dl *models.Download, do
 	// clients).
 	bookFiles := discoverBookFiles(downloadPath, explicitFiles)
 	if !isManualImport(ctx) {
-		bookFiles = dropImplausibleEbooks(bookFiles)
+		bookFiles = dropImplausibleEbooks(downloadPath, bookFiles)
 	}
 
 	if len(bookFiles) == 0 {

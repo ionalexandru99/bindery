@@ -3,6 +3,7 @@ package importer
 import (
 	"log/slog"
 	"os"
+	"path/filepath"
 	"slices"
 
 	"github.com/vavallee/bindery/internal/models"
@@ -15,10 +16,21 @@ import (
 // of the book (#3224). A download holding nothing larger is left as it is.
 // Manual import does not call it: that is the override for a file this small
 // that really is the book.
-func dropImplausibleEbooks(files []string) []string {
+//
+// Only a file inside downloadPath is measured, checked with filepath.Rel and
+// filepath.IsLocal on the path that is then statted, the guard CodeQL's
+// go/path-injection query credits (see WriteOPFSidecarFile). A file outside
+// it is kept, as it was before this check existed.
+func dropImplausibleEbooks(downloadPath string, files []string) []string {
+	root := filepath.Clean(downloadPath)
 	tooSmall := make(map[string]bool)
 	for _, path := range files {
-		if info, err := os.Stat(path); err == nil && TooSmallToBeABook(path, info.Size()) {
+		rel, err := filepath.Rel(root, filepath.Clean(path))
+		if err != nil || !filepath.IsLocal(rel) {
+			continue
+		}
+		target := filepath.Join(root, rel)
+		if info, err := os.Stat(target); err == nil && TooSmallToBeABook(target, info.Size()) {
 			tooSmall[path] = true
 		}
 	}
