@@ -154,7 +154,7 @@ func (s *Scanner) findHeldSibling(ctx context.Context, bookID, excludeID int64, 
 		if h.ID == excludeID || h.BookID == nil || *h.BookID != bookID {
 			continue
 		}
-		files := discoverBookFiles(h.ImportPath, nil)
+		files := discoverBookFiles(ctx, h.ImportPath, nil)
 		if len(files) == 0 {
 			continue
 		}
@@ -169,7 +169,7 @@ func (s *Scanner) findHeldSibling(ctx context.Context, bookID, excludeID int64, 
 // finishes it, re-discovering its files from the recorded path. Used when the
 // second format of a pair completes.
 func (s *Scanner) releaseHeldSibling(ctx context.Context, held *models.Download, book *models.Book, author *models.Author, format, folder, layout, linkMode string) {
-	files := discoverBookFiles(held.ImportPath, nil)
+	files := discoverBookFiles(ctx, held.ImportPath, nil)
 	if len(files) == 0 {
 		s.failImport(ctx, held, models.StateImportFailed,
 			"pair gating release: held download files are no longer present — retry the import")
@@ -223,7 +223,7 @@ func (s *Scanner) sweepHeldPairGating(ctx context.Context) {
 			slog.Warn("drop: pair gating timeout — held download has no matching book, skipping", "title", h.Title)
 			continue
 		}
-		files := discoverBookFiles(h.ImportPath, nil)
+		files := discoverBookFiles(ctx, h.ImportPath, nil)
 		format := detectDownloadFormat(files)
 		// The drop folder is per format (#1632). When this format no longer
 		// drops at all (no drop folder any more, or its import mode is no

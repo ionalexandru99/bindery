@@ -392,18 +392,24 @@ themselves. `Part 1-2` is left alone, because that is how one long audiobook
 is split, and so is `Trilogy`, because real single books are subtitled "Book
 III of the X Trilogy". A bare `series` or `collection` is left alone too, but
 the shapes only a pack uses are caught: `Foundation series by Isaac Asimov`
-with no book number, `Series 1-7`, a bracketed count such as `(11 Books)`,
-`Books Collection`, `Series Pack` and `Saga eBooks`. `Series by Pierce Brown,
-Book 1` names one book and is not a pack. If the book you are tracking is
+when only format words (EPUB, ebook, kindle, a year) follow the author,
+`Series - Isaac Asimov 1-7`, a bracketed count of two or more such as
+`(11 Books)`, `Books Collection` (plural only), `Series Pack` and `Saga eBooks`.
+A title after the author names one book and is not a pack: `Discworld Series by
+Terry Pratchett - Guards! Guards!`, `Series by Pierce Brown, Book 1`, `[1 Book]`. If the book you are tracking is
 itself a bundle (a box set as one record), matching packs are allowed for it.
 
 A pack whose name gives no sign of it can still be grabbed. When a download
 holds several ebook files of one format, the one whose file name or EPUB title
 is closest to the book is imported, and so is the one an external drop folder
-receives. An ebook file under 4 KiB in a download, such as the notes or link
+receives, in both its flat and templated layouts. A file is only moved ahead of
+the one that would have gone first when its name or title clearly matches the
+book, for example `Wheel of Time 01 - The Eye of the World` for the book `The
+Eye of the World`; names that say nothing keep the order they have on disk. An ebook file under 4 KiB in a download, such as the notes or link
 `.txt` a release ships beside the book, is not imported as a second format. A
-download that holds nothing else is blocked, and Manual Import places a file
-that small if it really is the book. Audiobook tracks are never judged by size.
+download that holds nothing else is blocked, whether the import is managed or
+goes to an external drop folder, and Manual Import places a file that small if
+it really is the book, in either mode. Audiobook tracks are never judged by size.
 
 **Grab.** Torznab (torrent) indexers route to your torrent client, Newznab
 (usenet) to your NZB client — which is why the client's protocol must match

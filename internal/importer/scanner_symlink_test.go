@@ -36,7 +36,7 @@ func TestDiscoverBookFiles_SkipsSymlinks(t *testing.T) {
 	}
 
 	// Walk path (no explicit file list).
-	walked := discoverBookFiles(dir, nil)
+	walked := discoverBookFiles(t.Context(), dir, nil)
 	if !has(walked, real) {
 		t.Errorf("walk: expected the real ebook to be discovered, got %v", walked)
 	}
@@ -45,7 +45,7 @@ func TestDiscoverBookFiles_SkipsSymlinks(t *testing.T) {
 	}
 
 	// Explicit-file path (download client's authoritative file list).
-	explicit := discoverBookFiles(dir, []string{real, evil})
+	explicit := discoverBookFiles(t.Context(), dir, []string{real, evil})
 	if !has(explicit, real) {
 		t.Errorf("explicit: expected the real ebook, got %v", explicit)
 	}

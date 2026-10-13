@@ -208,13 +208,13 @@ func TestDiscoverBookFiles_DropsFilesNotOnDisk(t *testing.T) {
 	}
 	phantom := filepath.Join(dir, "Bob the Drag Queen - Harriet Tubman - Live in Concert.m4b")
 
-	got := discoverBookFiles(dir, []string{phantom})
+	got := discoverBookFiles(t.Context(), dir, []string{phantom})
 	if len(got) != 0 {
 		t.Errorf("#1955 regression: a file the client lists but the filesystem does not have "+
 			"must not be discovered; got %v", got)
 	}
 
-	got = discoverBookFiles(dir, []string{phantom, real})
+	got = discoverBookFiles(t.Context(), dir, []string{phantom, real})
 	if len(got) != 1 || got[0] != real {
 		t.Errorf("expected only the file that exists, got %v", got)
 	}
@@ -224,7 +224,7 @@ func TestDiscoverBookFiles_DropsFilesNotOnDisk(t *testing.T) {
 	if err := os.Symlink(real, link); err != nil {
 		t.Skipf("symlinks unsupported here: %v", err)
 	}
-	if got := discoverBookFiles(dir, []string{link}); len(got) != 0 {
+	if got := discoverBookFiles(t.Context(), dir, []string{link}); len(got) != 0 {
 		t.Errorf("expected symlinked file to still be rejected, got %v", got)
 	}
 }

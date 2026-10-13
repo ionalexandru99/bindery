@@ -49,20 +49,23 @@ import (
 //
 // Added for #3224, from the release names of one search for "Foundation":
 //
-//   - A counted bundle in brackets: "(11 Books)", "[03 Ebooks]". The count and
+//   - A counted bundle in brackets: "(11 Books)", "[03 Ebooks]", never "[1 Book]". The count and
 //     the noun sit inside brackets, which is where indexers put what the
 //     release contains, not what the book is called.
-//   - "Books Collection", "Collection Pack", "Series Pack" and a bracketed
+//   - "Books Collection" (plural only: "The Poe Book Collection" is one
+//     volume), "Collection Pack", "Series Pack" and a bracketed
 //     "(Foundation Pack)": the word that makes the collection a product.
 //   - "Saga eBooks", "Series eBooks": the plural noun after the series word
 //     is the series' books, not one of them.
-//   - "<name> series by <author>" with no book number anywhere in the name. A
-//     release of one book names the book and gives it a number ("Red Rising
-//     Series by Pierce Brown, Book 1"); a name that gives the series and the
-//     author and nothing else is the whole series. "A Series of Unfortunate
-//     Events" is a title, so "series of" never matches.
-//   - A numeric range after "series" ("Series - Isaac Asimov 1-7"), unless
-//     the number is a part or disc ("Series Part 1-2" is one split recording).
+//   - "<name> series by <author>" when nothing but format or noise words
+//     (EPUB, ebook, kindle, complete, a year, a bracketed tag) follows the
+//     author. A release of one book gives its title after a dash or colon
+//     ("Discworld Series by Terry Pratchett - Guards! Guards!") or a book
+//     number ("Red Rising Series by Pierce Brown, Book 1"). "A Series of
+//     Unfortunate Events" is a title, so "series of" never matches.
+//   - A numeric range after "series" and at least one word ("Series - Isaac
+//     Asimov 1-7"), unless the number is a part or disc ("Series Part 1-2" is
+//     one split recording). "Series 1 - 2" with nothing between is left alone.
 //     The range must be one or two digits on both sides and rising, so a year
 //     span ("2014-2016") or an edition year ("1 - 2020") is not read as one.
 var multiBookPackRe = regexp.MustCompile(`(?i)` +
@@ -71,8 +74,8 @@ var multiBookPackRe = regexp.MustCompile(`(?i)` +
 	`|\bbox(?:ed)?\s*set\b` +
 	`|\bomnibus\b` +
 	`|\bcomplete\s+(?:series|collection|saga)\b` +
-	`|[(\[]\s*\d{1,3}\s*(?:e-?books?|books?|novels?|volumes?|titles?)\s*[)\]]` +
-	`|\b(?:e-?)?books?\s+collection\b` +
+	`|[(\[]\s*0*(?:[2-9]|[1-9]\d{1,2})\s*(?:e-?books?|books?|novels?|volumes?|titles?)\s*[)\]]` +
+	`|\b(?:e-?)?books\s+collection\b` +
 	`|\b(?:book|series|collection|saga)\s+pack\b` +
 	`|\bpack\s*[)\]]` +
 	`|\b(?:series|saga)\s+e-?books\b`)
@@ -83,7 +86,7 @@ var (
 	// bookNumberRe finds a release naming one numbered book or volume.
 	bookNumberRe = regexp.MustCompile(`(?i)\b(?:book|vol(?:ume)?|bk|no|part|pt)\.?\s*#?\s*(?:\d+|[ivx]+|one|two|three|four|five|six|seven|eight|nine|ten)\b|#\s*\d+`)
 	// seriesRangeRe finds a one or two digit range after the series word.
-	seriesRangeRe = regexp.MustCompile(`(?i)\bseries\b([^\n]{0,60}?)\b(\d{1,2})\s*[-–—]\s*(\d{1,2})\b`)
+	seriesRangeRe = regexp.MustCompile(`(?i)\bseries\b([^\n]{0,60}?[a-z][^\n]{0,60}?)\b(\d{1,2})\s*[-–—]\s*(\d{1,2})\b`)
 	// partWordRe ends text that introduces a split recording or disc set.
 	partWordRe = regexp.MustCompile(`(?i)\b(?:parts?|pts?|discs?|cds?|chapters?|ch)\.?\s*$`)
 )
@@ -98,10 +101,40 @@ func seriesPackMarker(title string) string {
 			return strings.TrimSpace(title[m[0]:m[1]])
 		}
 	}
-	if loc := seriesByRe.FindStringIndex(title); loc != nil && !bookNumberRe.MatchString(title) {
+	if loc := seriesByRe.FindStringIndex(title); loc != nil && !bookNumberRe.MatchString(title) &&
+		onlyNoiseAfterSeriesBy(title[loc[1]:]) {
 		return title[loc[0]:loc[1]]
 	}
 	return ""
+}
+
+var (
+	bracketGroupRe = regexp.MustCompile(`[(\[][^)\]]*[)\]]`)
+	titleSepRe     = regexp.MustCompile(`\s[-–—]\s|:`)
+	yearRe         = regexp.MustCompile(`^(?:19|20)\d\d$`)
+	noiseWords     = map[string]bool{
+		"epub": true, "mobi": true, "azw": true, "azw3": true, "pdf": true,
+		"ebook": true, "ebooks": true, "e-book": true, "e-books": true,
+		"kindle": true, "complete": true, "collection": true, "retail": true,
+	}
+)
+
+// onlyNoiseAfterSeriesBy reports whether, past the first dash or colon of the
+// text after "series by", there is nothing a book could be titled with. The
+// text before it is the author. Bracketed groups are tags and are dropped.
+func onlyNoiseAfterSeriesBy(rest string) bool {
+	rest = bracketGroupRe.ReplaceAllString(rest, " ")
+	loc := titleSepRe.FindStringIndex(rest)
+	if loc == nil {
+		return true
+	}
+	for _, w := range strings.Fields(strings.ToLower(rest[loc[1]:])) {
+		w = strings.Trim(w, ".,;!?&+-")
+		if w != "" && !noiseWords[w] && !yearRe.MatchString(w) {
+			return false
+		}
+	}
+	return true
 }
 
 // MultiBookPackMarker returns the substring of title that identifies it as a

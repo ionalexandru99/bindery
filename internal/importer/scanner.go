@@ -907,6 +907,18 @@ func (s *Scanner) failImport(ctx context.Context, dl *models.Download, status mo
 	})
 }
 
+// blockTinyOnlyDownload blocks a download whose only ebook files are under
+// MinPlausibleEbookBytes (#3224). Retrying cannot change that, so it is blocked
+// with the override named, and the path is kept for manual import.
+func (s *Scanner) blockTinyOnlyDownload(ctx context.Context, dl *models.Download, downloadPath string) {
+	s.recordUnmatchedImportPath(ctx, dl.ID, downloadPath)
+	// importPending cannot go straight to blocked.
+	s.updateDownloadStatus(ctx, dl.ID, models.StateImporting)
+	s.failImport(ctx, dl, models.StateImportBlocked, fmt.Sprintf(
+		"nothing was imported: the only ebook files in %q are under %d bytes, too small to be a book. If one of them really is the book, use manual import",
+		downloadPath, MinPlausibleEbookBytes))
+}
+
 // recordUnmatchedImportPath persists where a completed download's files are so a
 // later manual "Match to book" (#1589) can import them directly. Best-effort: a
 // failure here only loses the manual-import shortcut, not any files.
@@ -1602,12 +1614,7 @@ func (s *Scanner) tryImportInternal(ctx context.Context, dl *models.Download, do
 		// Everything the download held was too small to be a book. Retrying
 		// cannot change that, so block it and point at the override.
 		if len(tooSmallFiles) > 0 {
-			s.recordUnmatchedImportPath(ctx, dl.ID, downloadPath)
-			// importPending cannot go straight to blocked.
-			s.updateDownloadStatus(ctx, dl.ID, models.StateImporting)
-			s.failImport(ctx, dl, models.StateImportBlocked, fmt.Sprintf(
-				"nothing was imported: the only ebook files in %q are under %d bytes, too small to be a book. If one of them really is the book, use manual import",
-				downloadPath, MinPlausibleEbookBytes))
+			s.blockTinyOnlyDownload(ctx, dl, downloadPath)
 			return
 		}
 		// Distinguish "path doesn't exist on this host" from "path exists but has

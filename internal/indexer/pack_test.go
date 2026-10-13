@@ -78,6 +78,10 @@ func TestMultiBookPackMarker_FoundationSearch(t *testing.T) {
 		"Isaac Asimov Books Collection(Foundation Pack)",
 		"Foundation Saga eBooks",
 		"Ebook Series Isaac Asimov (03 Books)",
+		"Foundation series by Isaac Asimov (EPUB) 2019",
+		"Foundation series by Isaac Asimov - Complete EPUB",
+		"Discworld Series by Terry Pratchett [MOBI]",
+		"Foundation series by Isaac Asimov: ebooks kindle",
 	} {
 		if MultiBookPackMarker(title) == "" {
 			t.Errorf("%q was not recognised as a multi-book pack", title)
@@ -107,6 +111,16 @@ func TestMultiBookPackMarker_FoundationSingles(t *testing.T) {
 		{"Starter Pack Blues - Jane Doe", "pack inside a title with no bracket"},
 		{"Six Books You Must Read - John Smith", "a count with books but no brackets"},
 		{"The Series - Jane Doe", "series alone"},
+		{"Discworld Series by Terry Pratchett - Guards! Guards!", "a title after the author is one book"},
+		{"Foundation Series by Isaac Asimov - Foundation and Empire", "a title after the author is one book"},
+		{"Harry Potter Series by J.K. Rowling - Harry Potter and the Goblet of Fire (EPUB)", "a title after the author is one book"},
+		{"The Expanse Series by James S. A. Corey - Leviathan Wakes", "a title after the author is one book"},
+		{"Mistborn Series by Brandon Sanderson: The Final Empire", "a title after a colon is one book"},
+		{"Outlander Series by Diana Gabaldon - Dragonfly in Amber [MOBI]", "a title then a format tag is one book"},
+		{"The Chronicles of Narnia Series by C.S. Lewis - The Lion, the Witch and the Wardrobe", "a title after the author is one book"},
+		{"The Series 1 - 2 Handbook", "a range with no words between it and series is not a pack"},
+		{"Foundation - Isaac Asimov [1 Book]", "a count of one is not a bundle"},
+		{"The Poe Book Collection", "singular book collection is one volume"},
 	} {
 		if got := MultiBookPackMarker(tc.title); got != "" {
 			t.Errorf("%q matched %q but is a single book (%s)", tc.title, got, tc.why)

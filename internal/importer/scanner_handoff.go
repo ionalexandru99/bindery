@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -105,7 +106,7 @@ func (s *Scanner) downloadImportMode(ctx context.Context, downloadPath, formatHi
 	}
 	format := formatHint
 	if format != models.MediaTypeAudiobook && format != models.MediaTypeEbook {
-		format = detectDownloadFormat(discoverBookFiles(downloadPath, explicitFiles))
+		format = detectDownloadFormat(discoverBookFiles(ctx, downloadPath, explicitFiles))
 	}
 	if format == models.MediaTypeAudiobook {
 		return audiobookMode
@@ -264,9 +265,10 @@ func (s *Scanner) pushToCWA(ctx context.Context, srcPath string) {
 // per-torrent file list (issue #903) is authoritative; otherwise it walks the
 // download path for recognised book files. Shared by the normal import flow
 // and the external-mode drop handoff. Ebook files under MinPlausibleEbookBytes
-// are left out; discoverBookFilesSized reports them and can keep them.
-func discoverBookFiles(downloadPath string, explicitFiles []string) []string {
-	files, _ := discoverBookFilesSized(downloadPath, explicitFiles, true)
+// are left out unless ctx is a manual import, which is the override for a file
+// that small; discoverBookFilesSized reports the ones left out.
+func discoverBookFiles(ctx context.Context, downloadPath string, explicitFiles []string) []string {
+	files, _ := discoverBookFilesSized(downloadPath, explicitFiles, !isManualImport(ctx))
 	return files
 }
 
@@ -455,8 +457,9 @@ func (s *Scanner) dropToFolder(ctx context.Context, dl *models.Download, downloa
 
 	// The format decides the destination (#1632): audiobooks may have a drop
 	// folder of their own, so it is resolved before the folder is read.
-	bookFiles := discoverBookFiles(downloadPath, explicitFiles)
-	detectedFormat := detectDownloadFormat(bookFiles)
+	bookFiles, tooSmallFiles := discoverBookFilesSized(downloadPath, explicitFiles, !isManualImport(ctx))
+	// Files left out for their size still say which format this is.
+	detectedFormat := detectDownloadFormat(append(slices.Clone(bookFiles), tooSmallFiles...))
 	if formatHint == models.MediaTypeAudiobook || formatHint == models.MediaTypeEbook {
 		detectedFormat = formatHint
 	}
@@ -467,6 +470,10 @@ func (s *Scanner) dropToFolder(ctx context.Context, dl *models.Download, downloa
 	}
 
 	if len(bookFiles) == 0 {
+		if len(tooSmallFiles) > 0 {
+			s.blockTinyOnlyDownload(ctx, dl, downloadPath)
+			return true
+		}
 		if _, statErr := os.Stat(downloadPath); os.IsNotExist(statErr) {
 			s.failImport(ctx, dl, models.StateImportFailed,
 				fmt.Sprintf("download path not found: %q — configure PathRemap on the download client", downloadPath))
